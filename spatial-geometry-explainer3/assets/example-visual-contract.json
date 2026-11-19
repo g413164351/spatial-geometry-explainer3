@@ -1,0 +1,246 @@
+{
+  "schema_version": "1.1",
+  "title": "General 2D vector and reference axis: angle to projection",
+  "requires_angles": true,
+  "quantity_ids": [
+    "origin",
+    "u",
+    "axis",
+    "theta",
+    "uAlong",
+    "uAcross"
+  ],
+  "anchor_ids": [
+    "origin"
+  ],
+  "angles": [
+    {
+      "id": "theta",
+      "anchor": "origin",
+      "ray_a": "u",
+      "ray_b": "axis",
+      "plane": "2D xy plane, normal +z",
+      "arc_id": "theta.arc",
+      "formula": "atan2(cross2(axis,u),dot(axis,u))",
+      "on_model": true,
+      "world_rays": true,
+      "inset": true,
+      "inset_linked_to_anchor": true,
+      "angle_exaggerated": false
+    }
+  ],
+  "stages": [
+    {
+      "step": 2,
+      "title": "Define a reference direction and the angle",
+      "visible": [
+        "origin",
+        "u",
+        "axis",
+        "theta"
+      ],
+      "introduced": [
+        "axis",
+        "theta"
+      ],
+      "retained": [
+        "origin",
+        "u"
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Project onto the axis and reconstruct the input",
+      "visible": [
+        "origin",
+        "u",
+        "axis",
+        "theta",
+        "uAlong",
+        "uAcross"
+      ],
+      "introduced": [
+        "uAlong",
+        "uAcross"
+      ],
+      "retained": [
+        "origin",
+        "u",
+        "axis",
+        "theta"
+      ]
+    }
+  ],
+  "handoffs": [
+    {
+      "from_step": 2,
+      "to_step": 3,
+      "retained": [
+        "origin",
+        "u",
+        "axis",
+        "theta"
+      ],
+      "introduced": [
+        "uAlong",
+        "uAcross"
+      ],
+      "source_identity": "u",
+      "source_relationship": "derived",
+      "same_input": true,
+      "frames": [
+        0,
+        25,
+        50,
+        75,
+        100
+      ],
+      "operation": "orthogonal projection onto a unit axis, then subtract residual",
+      "visual_proof": "original input and reference angle remain at the same origin; projection and perpendicular residual appear sequentially; sum closes the triangle"
+    }
+  ],
+  "checks": [
+    {
+      "kind": "angles",
+      "viewports": [
+        "desktop",
+        "mobile"
+      ],
+      "views": [
+        "default",
+        "local-plane"
+      ],
+      "steps": [
+        2,
+        3
+      ],
+      "frames": [
+        0,
+        25,
+        50,
+        75,
+        100
+      ],
+      "parameters": [
+        {
+          "theta": 0
+        },
+        {
+          "theta": 30
+        },
+        {
+          "theta": -30
+        },
+        {
+          "theta": 90
+        }
+      ],
+      "review_status": "pending",
+      "review_notes": "",
+      "screenshots": []
+    },
+    {
+      "kind": "handoff",
+      "viewports": [
+        "desktop",
+        "mobile"
+      ],
+      "views": [
+        "default"
+      ],
+      "steps": [
+        2,
+        3
+      ],
+      "frames": [
+        0,
+        25,
+        50,
+        75,
+        100
+      ],
+      "parameters": [
+        {
+          "theta": 0
+        },
+        {
+          "theta": 30
+        },
+        {
+          "theta": -30
+        },
+        {
+          "theta": 90
+        }
+      ],
+      "review_status": "pending",
+      "review_notes": "",
+      "screenshots": []
+    },
+    {
+      "kind": "interaction",
+      "viewports": [
+        "desktop",
+        "mobile"
+      ],
+      "views": [
+        "default",
+        "local-plane"
+      ],
+      "steps": [
+        2,
+        3
+      ],
+      "frames": [],
+      "parameters": [
+        {
+          "theta": 0
+        },
+        {
+          "theta": 30
+        },
+        {
+          "theta": -30
+        },
+        {
+          "theta": 90
+        }
+      ],
+      "review_status": "pending",
+      "review_notes": "",
+      "screenshots": []
+    },
+    {
+      "kind": "parameter_cases",
+      "viewports": [
+        "desktop",
+        "mobile"
+      ],
+      "views": [
+        "default"
+      ],
+      "steps": [
+        2,
+        3
+      ],
+      "frames": [],
+      "parameters": [
+        {
+          "theta": 0
+        },
+        {
+          "theta": 30
+        },
+        {
+          "theta": -30
+        },
+        {
+          "theta": 90
+        }
+      ],
+      "review_status": "pending",
+      "review_notes": "",
+      "screenshots": []
+    }
+  ]
+}

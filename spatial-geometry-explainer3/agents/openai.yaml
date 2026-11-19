@@ -1,0 +1,5 @@
+interface:
+  display_name: "连贯式矢量与空间讲解器"
+  short_description: "跨领域连续图解矢量、角度、分解、平移、投影与推导"
+  icon: "cube"
+  brand_color: "#188E99"

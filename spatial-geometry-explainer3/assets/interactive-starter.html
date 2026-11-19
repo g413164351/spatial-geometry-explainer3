@@ -1,0 +1,182 @@
+<!doctype html>
+<!--
+A domain-neutral 2D vector teaching starter. Place: abstract XY math plane.
+Daylight editorial palette: warm paper, navy ink, muted mint and orange.
+Layers: grid, reference axis, input vector, angle arc, projected components.
+All vectors share one origin; no domain-specific source, physics or target cases.
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>通用几何课件模板 · 一根向量的来龙去脉</title>
+<style>
+:root{--paper:#faf7ef;--ink:#193c50;--sub:#5d7381;--line:#cadbdc;--blue:#3279b9;--mint:#2c9b80;--orange:#de814c;--purple:#775db6}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+main{max-width:1180px;margin:auto;padding:24px 20px 40px}
+header{margin-bottom:16px}header .eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;color:#a17c45}
+h1{font-size:clamp(24px,3vw,36px);line-height:1.2;margin:8px 0}
+p{margin:6px 0;color:var(--sub)}.layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.75fr);gap:16px;align-items:start}
+.panel{background:#fff;border:1px solid #d5e1e2;border-radius:18px;overflow:hidden;box-shadow:0 7px 22px #193c500a}
+header.small{padding:14px 18px;margin:0;border-bottom:1px solid var(--line)}
+header.small b{font-size:15px}header.small p{font-size:12px}
+#scene{display:block;width:100%;height:auto;aspect-ratio:4/3;background:linear-gradient(160deg,#fcfffd,#f1f8f4)}
+.visual-footer{padding:12px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--sub)}
+.side{padding:20px}
+.side h2{font-size:20px;line-height:1.3;margin:4px 0 10px}
+.side .text{min-height:88px}
+.buttons{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+button{border:1px solid #d1dfe2;border-radius:9px;padding:9px 13px;background:#f0f6f6;color:var(--ink);font:700 13px system-ui;cursor:pointer}
+button.primary{background:#235576;border-color:#235576;color:#fff}
+button.active{background:#dceae7}
+.control{margin:14px 0}.control label{display:flex;justify-content:space-between;font-size:13px;font-weight:700}
+input[type=range]{width:100%;accent-color:#c87b53;cursor:pointer}.formula{background:#edf5f7;border-left:3px solid #2f83ad;padding:13px 16px;border-radius:8px;line-height:1.9;margin-top:14px;font-family:ui-monospace,"SFMono-Regular",Consolas,monospace;font-size:13px}
+.smallprint{font-size:11px;color:#687f89}.progressbar{display:flex;gap:3px;margin-top:12px}.progressbar button{flex:1;padding:9px 5px;font-size:11px}.progressbar button[aria-current="step"]{background:#235576;color:white}
+@media(max-width:800px){main{padding:15px 12px}.layout{grid-template-columns:1fr}.side{padding:18px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body><main>
+<header><div class="eyebrow">SPATIAL GEOMETRY / GENERIC STARTER</div>
+<h1>从一个向量，到有来源的两个分量</h1>
+<p>一个输入 · 一个参考角 · 一次正交投影 · 一次重构。场景刻意不绑定具体学科。</p></header>
+<div class="layout">
+<section class="panel">
+  <header class="small"><b>连续几何画布</b><p>所有图形由同一状态计算；改变角度后，分量与公式同步更新。</p></header>
+  <canvas id="scene" width="720" height="540" aria-label="原向量、参考轴、角弧及正交分量"></canvas>
+  <div class="visual-footer">颜色不是唯一编码：蓝色 u / 青绿色 u∥ / 橙色 u⊥。相机和其他学科模型应在新任务中独立设计。</div>
+</section>
+<section class="panel side">
+  <div class="eyebrow" style="font-size:11px;letter-spacing:.12em;color:#a17c45">STEP <span id="stepIndex">01</span> / 04</div>
+  <h2 id="title">原始输入</h2>
+  <p class="text" id="explanation"></p>
+  <div class="progressbar" id="stepTabs"></div>
+  <div class="buttons">
+    <button id="previous">← 上一步</button>
+    <button id="next" class="primary">下一步 →</button>
+    <button id="play">▶ 播放</button>
+    <button id="reset">重置</button>
+  </div>
+  <div class="control"><label for="angle">参考角 θ <output id="angleValue">32°</output></label><input id="angle" type="range" min="-85" max="85" step="1" value="32"></div>
+  <div class="control"><label for="magnitude">向量长度 |u| <output id="magnitudeValue">5.0</output></label><input id="magnitude" type="range" min="1" max="8" step=".1" value="5"></div>
+  <div class="control"><label for="phase">当前步骤动画进度 <output id="phaseValue">100%</output></label><input id="phase" type="range" min="0" max="100" step="1" value="100"></div>
+  <div class="formula" id="formula"></div>
+  <p class="smallprint">这是教学框架的中性样例，不包含实际应用题的公式。真正问题仍需独立选择坐标系、角定义和物理假设。</p>
+</section>
+</div></main>
+<script>
+(()=>{
+"use strict";
+const $=id=>document.getElementById(id),cnv=$("scene"),ctx=cnv.getContext("2d");
+const PI=Math.PI, state={stage:0,phase:1,theta:32,mag:5,playing:false};
+let animationId=0,last=0;
+const steps=[
+  ["原始输入","先认识原向量 u：从同一原点 O 出发，长度与方向来自滑块输入。不要先给出分量。"],
+  ["定义参考角","保持原向量不变。画出参考轴 e 和 θ 的真实两条角边，角弧位于 XY 平面。"],
+  ["正交分解","沿参考轴绘出 u∥，从它的终点绘出 u⊥，让两根分量与原 u 首尾闭合。"],
+  ["重构与反证","三条线保留。θ 设为 0° 时垂直分量消失；θ 反号时垂直分量反向。"]
+];
+const tabs=$("stepTabs");
+steps.forEach((step,i)=>{
+  const button=document.createElement("button");
+  button.textContent=String(i+1)+" "+["输入","角","分解","检验"][i];
+  button.addEventListener("click",()=>{state.stage=i;state.phase=1;state.playing=false;render();});
+  tabs.appendChild(button);
+});
+function q(){
+  const t=state.theta*PI/180,ux=state.mag*Math.cos(t),uy=state.mag*Math.sin(t);
+  return {t, u:[ux,uy], along:[ux,0], across:[0,uy], mag:state.mag};
+}
+function arrow(x1,y1,x2,y2,color,width=3,alpha=1){
+  const dx=x2-x1,dy=y2-y1,l=Math.hypot(dx,dy);
+  if(l<.1)return;
+  const nx=dx/l,ny=dy/l;
+  ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=width;
+  ctx.lineCap="round";ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+  const size=10;ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-nx*size-ny*size*.45,y2-ny*size+nx*size*.45);
+  ctx.lineTo(x2-nx*size+ny*size*.45,y2-ny*size-nx*size*.45);ctx.closePath();ctx.fill();ctx.restore();
+}
+function text(t,x,y,color="#193c50",size=15){
+ ctx.fillStyle=color;ctx.font=`bold ${size}px system-ui,"PingFang SC",sans-serif`;
+ ctx.textAlign="center";ctx.fillText(t,x,y);
+}
+function paint(){
+ const w=cnv.width,h=cnv.height,C={x:w*.33,y:h*.62},scale=40;
+ const v=q(),end={x:C.x+v.u[0]*scale,y:C.y-v.u[1]*scale};
+ const foot={x:end.x,y:C.y};
+ ctx.clearRect(0,0,w,h);
+ ctx.fillStyle="#f9fcfa";ctx.fillRect(0,0,w,h);
+ ctx.strokeStyle="#e3eff0";ctx.lineWidth=1;
+ for(let x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}
+ for(let y=0;y<h;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
+ ctx.strokeStyle="#9bb1bb";ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(35,C.y);ctx.lineTo(w-20,C.y);ctx.moveTo(C.x,20);ctx.lineTo(C.x,h-20);ctx.stroke();
+ text("O",C.x-16,C.y+23,"#416779",14);
+ arrow(C.x,C.y,end.x,end.y,"#3279b9",5);
+ text("u",end.x+14,end.y-14,"#3279b9",17);
+ if(state.stage>=1){
+  const strength=state.stage===1?state.phase:1;
+  arrow(C.x,C.y,C.x+93*strength,C.y,"#8d9197",2.2,1);
+  text("e",C.x+104,C.y+4,"#627581",13);
+  if(Math.abs(v.t)>.002){
+   ctx.strokeStyle="#be8646";ctx.lineWidth=2.6;ctx.beginPath();
+   const a1=Math.min(0,-v.t),a2=Math.max(0,-v.t);
+   ctx.arc(C.x,C.y,43,a1,a2);ctx.stroke();
+  }
+  text("θ = "+state.theta+"°",C.x+69,C.y-(state.theta>=0?24:-23),"#ab7043",13);
+ }
+ if(state.stage>=2){
+  const p=state.stage===2?state.phase:1;
+  arrow(C.x,C.y,C.x+(foot.x-C.x)*p,C.y,"#2c9b80",4.5);
+  text("u∥",C.x+(foot.x-C.x)*.58,C.y+25,"#2c9b80",16);
+  arrow(foot.x,C.y,foot.x,foot.y+(C.y-foot.y)*(1-p),"#de814c",4.5,p);
+  text("u⊥",foot.x+23,C.y+(foot.y-C.y)*.55,"#de814c",16);
+  if(p>.99){ctx.strokeStyle="#a7b7b9";ctx.lineWidth=1.6;ctx.strokeRect(foot.x-12,C.y-12,12,12)}
+ }
+ ctx.strokeStyle="#bfd0d2";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(C.x,0);ctx.stroke();
+}
+function update(){
+ const x=q(),s=state.stage;
+ $("stepIndex").textContent=String(s+1).padStart(2,"0");
+ $("title").textContent=steps[s][0];
+ $("explanation").textContent=steps[s][1];
+ $("angleValue").textContent=state.theta+"°";
+ $("magnitudeValue").textContent=state.mag.toFixed(1);
+ $("phaseValue").textContent=Math.round(state.phase*100)+"%";
+ $("phase").value=state.phase*100;
+ $("previous").disabled=s===0;
+ $("next").disabled=s===3;
+ $("play").textContent=state.playing?"⏸ 暂停":"▶ 播放";
+ [...tabs.children].forEach((el,i)=>el.setAttribute("aria-current",i===s?"step":"false"));
+ $("formula").textContent=s<2
+   ? "u = ("+x.u[0].toFixed(2)+", "+x.u[1].toFixed(2)+")\nθ = "+state.theta+"°"
+   : "u∥ = (u·e)e = ("+x.along[0].toFixed(2)+", 0)\nu⊥ = u − u∥ = (0, "+x.across[1].toFixed(2)+")\nu = u∥ + u⊥";
+ paint();
+}
+function render(){update()}
+$("previous").onclick=()=>{state.stage=Math.max(0,state.stage-1);state.phase=1;state.playing=false;render()};
+$("next").onclick=()=>{state.stage=Math.min(3,state.stage+1);state.phase=1;state.playing=false;render()};
+$("angle").oninput=e=>{state.theta=Number(e.target.value);render()};
+$("magnitude").oninput=e=>{state.mag=Number(e.target.value);render()};
+$("phase").oninput=e=>{state.phase=Number(e.target.value)/100;state.playing=false;render()};
+$("reset").onclick=()=>{state.stage=0;state.phase=1;state.theta=32;state.mag=5;state.playing=false;$("angle").value=32;$("magnitude").value=5;render()};
+$("play").onclick=()=>{state.playing=!state.playing;if(state.playing){state.phase=0;last=performance.now()}render()};
+function frame(t){
+ if(state.playing){
+  const dt=Math.min(100,t-last);last=t;
+  state.phase=Math.min(1,state.phase+dt/1600);
+  if(state.phase>=1){state.playing=false}
+  render();
+ }
+ animationId=requestAnimationFrame(frame);
+}
+window.lessonTest={
+ setStep(stepNumber){if(!Number.isInteger(stepNumber)||stepNumber<1||stepNumber>4)throw Error("step out of range");state.stage=stepNumber-1;state.playing=false;render()},
+ setPhase(fraction){state.phase=Math.max(0,Math.min(1,fraction));state.playing=false;render()},
+ setView(name){if(name!=="default")throw Error("this starter only contains a 2D default view");render()},
+ getEvidence(){return {stage:state.stage+1,phase:state.phase,theta:state.theta,vector:q().u,parallel:q().along,perpendicular:q().across}}
+};
+if(matchMedia("(prefers-reduced-motion: reduce)").matches)state.playing=false;
+render();requestAnimationFrame(frame);
+})();
+</script>
+</body></html>

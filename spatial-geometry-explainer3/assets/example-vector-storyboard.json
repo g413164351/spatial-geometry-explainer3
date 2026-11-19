@@ -1,0 +1,121 @@
+{
+  "lesson": "A single 2D vector: identity → reference angle → orthogonal decomposition → reconstruction",
+  "quantities": [
+    {
+      "id": "u",
+      "kind": "vector",
+      "unit": "arbitrary units",
+      "frame": "world_xy"
+    },
+    {
+      "id": "e",
+      "kind": "unit-direction",
+      "frame": "world_xy"
+    },
+    {
+      "id": "theta",
+      "kind": "angle",
+      "unit": "deg",
+      "frame": "world_xy"
+    },
+    {
+      "id": "u_parallel",
+      "kind": "vector",
+      "unit": "arbitrary units",
+      "frame": "world_xy"
+    },
+    {
+      "id": "u_perp",
+      "kind": "vector",
+      "unit": "arbitrary units",
+      "frame": "world_xy"
+    }
+  ],
+  "stages": [
+    {
+      "title": "01: Original vector and reference direction",
+      "question": "What is the input vector and which axis is used?",
+      "evidence": "Full input arrow and original unit reference direction are visible",
+      "retains": [],
+      "introduces": [
+        "u",
+        "e"
+      ],
+      "actions": [
+        {
+          "type": "define",
+          "result": "u"
+        },
+        {
+          "type": "define",
+          "result": "e"
+        }
+      ]
+    },
+    {
+      "title": "02: Definition of an angle",
+      "question": "Which two rays form theta?",
+      "evidence": "Common origin, input ray and reference-axis ray, measured arc in XY",
+      "retains": [
+        "u",
+        "e"
+      ],
+      "introduces": [
+        "theta"
+      ],
+      "actions": [
+        {
+          "type": "measure-angle",
+          "result": "theta",
+          "source": "u",
+          "basis": "e"
+        }
+      ]
+    },
+    {
+      "title": "03: Decomposition",
+      "question": "How is the input reconstructed from parallel and perpendicular components?",
+      "evidence": "Projection foot and two closed triangle legs; original arrow remains",
+      "retains": [
+        "u",
+        "e",
+        "theta"
+      ],
+      "introduces": [
+        "u_parallel",
+        "u_perp"
+      ],
+      "actions": [
+        {
+          "type": "project",
+          "result": "u_parallel",
+          "source": "u",
+          "basis": "e"
+        },
+        {
+          "type": "subtract",
+          "result": "u_perp",
+          "source": "u",
+          "inputs": [
+            "u",
+            "u_parallel"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "04: Reconstruction and edge cases",
+      "question": "What changes under zero or negative angle?",
+      "evidence": "Both components are retained alongside the original; sum closes triangle",
+      "retains": [
+        "u",
+        "e",
+        "theta",
+        "u_parallel",
+        "u_perp"
+      ],
+      "introduces": [],
+      "actions": []
+    }
+  ]
+}
